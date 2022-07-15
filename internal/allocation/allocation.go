@@ -2,6 +2,7 @@
 package allocation
 
 import (
+	"fmt"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -255,6 +256,11 @@ func (a *Allocation) packetHandler(m *Manager) {
 			n,
 			srcAddr.String())
 
+		fmt.Printf("relay socket %s received %d bytes from %s \n",
+			a.RelaySocket.LocalAddr().String(),
+			n,
+			srcAddr.String())
+
 		if channel := a.GetChannelByAddr(srcAddr); channel != nil {
 			channelData := &proto.ChannelData{
 				Data:   buffer[:n],
@@ -264,6 +270,11 @@ func (a *Allocation) packetHandler(m *Manager) {
 
 			if _, err = a.TurnSocket.WriteTo(channelData.Raw, a.fiveTuple.SrcAddr); err != nil {
 				a.log.Errorf("Failed to send ChannelData from allocation %v %v", srcAddr, err)
+			} else {
+				fmt.Printf("relay socket %s sent %d bytes to %s \n",
+					a.RelaySocket.LocalAddr().String(),
+					n,
+					srcAddr.String())
 			}
 		} else if p := a.GetPermission(srcAddr); p != nil {
 			udpAddr, ok := srcAddr.(*net.UDPAddr)
@@ -285,6 +296,11 @@ func (a *Allocation) packetHandler(m *Manager) {
 				a.fiveTuple.SrcAddr.String())
 			if _, err = a.TurnSocket.WriteTo(msg.Raw, a.fiveTuple.SrcAddr); err != nil {
 				a.log.Errorf("Failed to send DataIndication from allocation %v %v", srcAddr, err)
+			} else {
+				fmt.Printf("relay socket %s sent %d bytes to %s \n",
+					a.RelaySocket.LocalAddr().String(),
+					n,
+					srcAddr.String())
 			}
 		} else {
 			a.log.Infof("No Permission or Channel exists for %v on allocation %v", srcAddr, a.RelayAddr.String())
